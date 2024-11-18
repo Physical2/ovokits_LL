@@ -121,8 +121,9 @@
 
 <script setup>
 import axios from 'axios';
+// import { sign } from 'core-js/core/number';
 import md5 from 'md5';
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 
 const text = ref('')
@@ -180,14 +181,14 @@ const setTranslationType = (type) => {
 
 const getSign = (salt) => {
     const signString = appid + text.value + salt + key;
-    console.log("signString: ", signString);
+    // console.log("signString: ", signString);
     const resSign = md5(signString);
-    console.log("resSign: ", resSign);
+    // console.log("resSign: ", resSign);
     return resSign;
 };
 
 
-const autoTranslate = async () =>{
+const autoTranslate = async () => {
     if(!text.value){
         translatedText_1.value = "请输入内容进行翻译！";
         return;
@@ -218,7 +219,7 @@ const autoTranslate = async () =>{
         console.log("翻译结果: ", response.data);
         translatedText_1.value = response.data.trans_result[0].dst;
         //更新检测到的语言
-        detectedLanguage.value = response.data.trans_result[0].src;
+        // detectedLanguage.value = response.data.trans_result[0].src;
     }catch (error) {
     console.error("翻译失败:", error.message);
     translatedText_1.value = "翻译失败，请重试。";
@@ -227,12 +228,73 @@ const autoTranslate = async () =>{
     }
 }
 
+// 语种代码和名字的映射
+const languageMap = {
+        'en': '英语',
+        'zh': '汉语',
+        'jp': '日语',
+        'kor': '韩语',
+        'th': '泰语',
+        'vie': '越南语',
+        'ru': '俄语',
+      };
+
+const getLanguageName = (languageCode) => {
+  // 这里是支持 自动识别 的语种
+  return languageMap[languageCode] || '未知语言'; // 默认值为 "未知语言"
+} 
+
+const getLanguageCode = (languageName) => {
+  for (const [code, name] of Object.entries(languageMap)) {
+      if (name === languageName) {
+        return code;
+      }
+  }
+  return '未知语种代码';
+}
+
+const detectLanguage = async () => {
+    if(!text.value.trim()){
+      detectedLanguage.value = ' ';
+      return;
+    }
+
+    try{
+      const salt = Date.now().toString();
+      const response = await axios.post('/api/api/trans/vip/language', {
+        q: text.value,
+        appid: appid,
+        salt: salt,
+        sign: getSign(salt),
+
+      },
+      {
+        headers:{
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
+      detectedLanguage.value = getLanguageName(response.data.data.src);
+      console.log("response.data: ", response.data);
+      // console.log("response.data.data.src: ", response.data.data.src);
+    } catch (error) {
+      console.error('语言检测失败:', error);
+      detectedLanguage.value = '检测中...';
+      // 可能由于访问频率的限制，导致实时检测的话输入太快或退格太快会出现检测失败的情况
+      // 因此在这里重新调用函数
+      detectLanguage();
+  }
+}
+
+watch(text, detectLanguage);
+
 //交换输入和输出文本
 const swapText = () => {
     const temp = text.value;
     text.value = translatedText_1.value;
     translatedText_1.value = temp;
-    targetLanguage.value = detectedLanguage.value || "en";
+    targetLanguage.value = getLanguageCode(detectedLanguage.value) || "en";
+    console.log("targetLanguage变为:", targetLanguage.value);
     autoTranslate();
 }
 
