@@ -124,6 +124,7 @@ import axios from 'axios';
 // import { sign } from 'core-js/core/number';
 import md5 from 'md5';
 import { ref, watch } from 'vue'
+import { debounce } from 'lodash';
 
 
 const text = ref('')
@@ -222,9 +223,10 @@ const autoTranslate = async () => {
         // detectedLanguage.value = response.data.trans_result[0].src;
     }catch (error) {
     console.error("翻译失败:", error.message);
-    translatedText_1.value = "翻译失败，请重试。";
-    // sourceLanguage.value = '';
-    detectedLanguage.value = '';
+    translatedText_1.value = " ";
+    autoTranslate();
+    // detectedLanguage.value = '';
+
     }
 }
 
@@ -286,16 +288,20 @@ const detectLanguage = async () => {
   }
 }
 
-watch(text, detectLanguage);
+const debouncedDetectLanguage = debounce(detectLanguage, 400);
+const debouncedAutoTranslate = debounce(autoTranslate, 400);
+
+watch(text, debouncedDetectLanguage);
+watch(text, debouncedAutoTranslate);
 
 //交换输入和输出文本
 const swapText = () => {
     const temp = text.value;
     text.value = translatedText_1.value;
     translatedText_1.value = temp;
-    targetLanguage.value = getLanguageCode(detectedLanguage.value) || "en";
+    targetLanguage.value = getLanguageCode(detectedLanguage.value) || getLanguageCode('en');
     console.log("targetLanguage变为:", targetLanguage.value);
-    autoTranslate();
+    // autoTranslate();
 }
 
 
