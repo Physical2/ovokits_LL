@@ -2,16 +2,20 @@
   <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
   <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
    <LL />
+   <TestTranslate />
 </template>
 
 <script>
 // import HelloWorld from './components/HelloWorld.vue'
-import LL from './components/LL.vue'
+import LL from './components/LL.vue';
+import TestTranslate from './components/TestTranslate.vue';
 
 export default {
   name: 'App',
   components: {
-    LL
+    LL,
+    TestTranslate
+    
   }
 }
 </script>

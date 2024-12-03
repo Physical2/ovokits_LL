@@ -2,7 +2,7 @@
   <div class="translator">
     <!-- 标题 -->
     <header class="header">
-      <h1>LL翻译</h1>
+      <h1>翻译器</h1>
     </header>
 
     <!-- 选择翻译类型 -->
